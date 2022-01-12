@@ -36,7 +36,7 @@ services:
     env_file:
       - ./hadoop.env
     volumes:
-      - ./batch:/home/batch
+      - ../scripts:/home/batch
 
   spark-worker1:
     image: bde2020/spark-worker:3.0.1-hadoop3.2
@@ -99,38 +99,7 @@ services:
     depends_on:
       - zoo1
 
-  # producer:
-  #   build: ../producer
-  #   container_name: kafka_producer
-  #   environment:
-  #     KAFKA_BROKERS: "kafka1:19092,kafka2:19092 "
-  #   depends_on:
-  #     - kafka1
-  #     - kafka2
-
-  # consumers:
-  #   build: ../consumers
-  #   container_name: consumers
-  #   environment:
-  #     KAFKA_BROKERS: "kafka1:19092,kafka2:19092 "
-  #   depends_on:
-  #     - kafka1
-  #     - kafka2
-
   # ubacivac batch skup podataka u HDFS
-
-  hue:
-    image: gethue/hue:20201111-135001
-    hostname: hue
-    container_name: hue
-    dns: 8.8.8.8
-    ports:
-      - "8888:8888"
-    volumes:
-      - ./conf.dist:/usr/share/hue/desktop/conf
-    depends_on:
-      - namenode
-
 
 volumes:
   hadoop_namenode:
