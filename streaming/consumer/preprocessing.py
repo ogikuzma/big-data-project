@@ -32,25 +32,25 @@ schema = StructType() \
   .add("posting_date", StringType()) \
 
 def clean_dataframe(df):
-    df = df.select( \
-    from_json(col("value").cast("string"), schema).alias("data")).select("data.*")
+  df = df.select(
+      col("timestamp"),
+      from_json(col("value").cast("string"), schema).alias("data")).select("data.*", "timestamp")
 
-    df = df.withColumn("id", col("id").cast(LongType())) \
-    .withColumn("price", col("price").cast(FloatType())) \
-    .withColumn("cylinders", col("cylinders").cast(IntegerType())) \
-    .withColumn("odometer", col("odometer").cast(FloatType())) \
-    .withColumn("lat", col("lat").cast(FloatType())) \
-    .withColumn("long", col("long").cast(FloatType())) \
-    .withColumn("posting_date", col("posting_date").cast(DateType())) \
-    .drop(col("region")) \
-    .drop(col("region_url")) \
-    .drop(col("cylinders")) \
-    .drop(col("paint_color")) \
-    .drop(col("image_url")) \
-    .drop(col("description")) \
-    .drop(col("county")) \
-    .drop(col("state")) \
-    .drop(col("lat")) \
-    .drop(col("long"))
+  df = df.withColumn("id", col("id").cast(LongType())) \
+  .withColumn("price", col("price").cast(FloatType())) \
+  .withColumn("cylinders", col("cylinders").cast(IntegerType())) \
+  .withColumn("odometer", col("odometer").cast(FloatType())) \
+  .withColumn("lat", col("lat").cast(FloatType())) \
+  .withColumn("long", col("long").cast(FloatType())) \
+  .withColumn("posting_date", col("posting_date").cast(DateType())) \
+  .drop(col("region")) \
+  .drop(col("region_url")) \
+  .drop(col("cylinders")) \
+  .drop(col("paint_color")) \
+  .drop(col("image_url")) \
+  .drop(col("description")) \
+  .drop(col("county")) \
+  .drop(col("lat")) \
+  .drop(col("long"))
 
-    return df
+  return df

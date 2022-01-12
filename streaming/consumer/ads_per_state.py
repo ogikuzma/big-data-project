@@ -34,12 +34,20 @@ df = spark \
 
 df = clean_dataframe(df)
 
-print("--- 2. Average mileage ---")
+print("--- 5. Number of car ads per US state in 1 minute every 30 seconds ---")
+num_of_ads = df.groupBy(window(df.timestamp, "1 minute", "30 seconds"), "state") \
+                .agg(
+                  count("*").alias("NumOfAds")
+                ) \
+                .orderBy(desc("NumOfAds")) \
+                .limit(10) \
+                .orderBy("window")
 
 
-query = df \
+query = num_of_ads \
     .writeStream \
+    .outputMode("complete") \
     .format("console") \
-    .start(truncate=True)
+    .start(truncate=False)
 
 query.awaitTermination()

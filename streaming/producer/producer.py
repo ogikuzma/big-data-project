@@ -28,7 +28,7 @@ def convert_line_to_json(schema, line):
         else:
             row += '"' + columns[i].strip() + '":' + '"' + items[i].strip() + '"'
         row += ','
-        
+
     if row[len(row) - 1] == ',':
         row = row[:-1]
     row += '}'
