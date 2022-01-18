@@ -50,6 +50,18 @@ services:
     env_file:
       - ./hadoop.env
 
+  spark-worker2:
+    image: bde2020/spark-worker:3.0.1-hadoop3.2
+    container_name: spark-worker2
+    depends_on:
+      - spark-master
+    environment:
+      - SPARK_MASTER=spark://spark-master:7077
+    ports:
+      - 8082:8081
+    env_file:
+      - ./hadoop.env
+
   zoo1:
     image: zookeeper:3.4.9
     container_name: zoo1
@@ -99,7 +111,13 @@ services:
     depends_on:
       - zoo1
 
-  # ubacivac batch skup podataka u HDFS
+  dataset-loader:
+    build: ../injector
+    container_name: dataset_loader
+    volumes:
+      - ../datasets:/datasets
+    depends_on:
+      - namenode
 
 volumes:
   hadoop_namenode:

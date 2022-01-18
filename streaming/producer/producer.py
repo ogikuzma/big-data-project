@@ -33,6 +33,8 @@ def convert_line_to_json(schema, line):
         row = row[:-1]
     row += '}'
 
+    print(row)
+
     return row
 
 while True:
@@ -49,6 +51,14 @@ client = InsecureClient(HDFS_NAMENODE)
 file_location = '/user/root/data-lake/raw/streaming-dataset.csv'
 schema = None
 
+while True:
+    try:
+        client.status(file_location)
+        break
+    except Exception as e:
+        print(file_location + " does not exist")
+        time.sleep(3)
+
 with client.read(file_location, encoding='utf-8', delimiter='\r') as reader:
     for index, line in enumerate(reader):
         if(index == 0):
@@ -57,7 +67,6 @@ with client.read(file_location, encoding='utf-8', delimiter='\r') as reader:
         id = line.split(",")[0]
         row = convert_line_to_json(schema, line)
         print('sending data to topic...')
-        # row = '{"id":"1","url":"www.bilosta.com"}'
         print(row)
         producer.send(TOPIC, key=bytes(id, 'utf-8'), value=bytes(row, 'utf-8'))
         time.sleep(1)

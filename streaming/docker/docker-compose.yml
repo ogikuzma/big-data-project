@@ -99,30 +99,22 @@ services:
     depends_on:
       - zoo1
 
+  # dataset-loader:
+  #   build: ../injector
+  #   container_name: dataset_loader
+  #   volumes:
+  #     - ../dataset:/dataset
+  #   depends_on:
+  #     - namenode
+
   producer:
     build: ../producer
     container_name: kafka_producer
     environment:
       KAFKA_BROKERS: "kafka1:19092,kafka2:19092"
       HDFS_NAMENODE: "http://namenode:9870"
-    depends_on:
       - kafka1
       - kafka2
-
-  # ubacivac batch skup podataka u HDFS
-
-  hue:
-    image: gethue/hue:20201111-135001
-    hostname: hue
-    container_name: hue
-    dns: 8.8.8.8
-    ports:
-      - "8888:8888"
-    volumes:
-      - ./conf.dist:/usr/share/hue/desktop/conf
-    depends_on:
-      - namenode
-
 
 volumes:
   hadoop_namenode:

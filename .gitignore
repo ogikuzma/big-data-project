@@ -1,7 +1,6 @@
 read.py
 datasets
 conf.dist
-batch/spark-warehouse
 batch/test.py
 
 __pycache__
