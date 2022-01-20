@@ -35,17 +35,29 @@ df = spark \
 df = clean_dataframe(df)
 
 print("--- 2. Average mileage for model year ---")
-num_of_ads = df.filter("year is not null") \
+avg_mileage = df.filter("year is not null") \
                 .groupBy("year") \
                 .agg(
                     round(avg("odometer")).alias("AvgMileage")
                 ) \
                 .orderBy(desc("year"))
 
-query = num_of_ads \
+HDFS_NAMENODE = os.environ["CORE_CONF_fs_defaultFS"]
+
+query1 = avg_mileage.select( to_json(struct("*")).alias("value")) \
+  .writeStream \
+  .outputMode("complete") \
+  .format("kafka") \
+  .option("kafka.bootstrap.servers", "kafka1:19092,kafka2:19092") \
+  .option("checkpointLocation", f"{HDFS_NAMENODE}/user/root/data-lake/transformation/avg_mileage_result") \
+  .option("topic", "avg_mileage") \
+  .start()
+
+query2 = avg_mileage \
     .writeStream \
     .outputMode("complete") \
     .format("console") \
     .start(truncate=False)
 
-query.awaitTermination()
+query1.awaitTermination()
+query2.awaitTermination()

@@ -35,18 +35,29 @@ df = spark \
 df = clean_dataframe(df)
 
 print("--- 4. Car brands sorted by number of them in the excellent condition ---")
-numOfAds = df.filter("condition == 'excellent'") \
+exc_condition = df.filter("condition == 'excellent'") \
               .groupBy("manufacturer") \
               .agg(
                 count("*").alias("NumOfCars")
               ) \
               .orderBy(desc("NumOfCars"))
 
+HDFS_NAMENODE = os.environ["CORE_CONF_fs_defaultFS"]
 
-query = numOfAds \
+query1 = exc_condition.select( to_json(struct("*")).alias("value")) \
+  .writeStream \
+  .outputMode("complete") \
+  .format("kafka") \
+  .option("kafka.bootstrap.servers", "kafka1:19092,kafka2:19092") \
+  .option("checkpointLocation", f"{HDFS_NAMENODE}/user/root/data-lake/transformation/exc_condition-result") \
+  .option("topic", "exc_condition") \
+  .start()
+
+query2 = exc_condition \
     .writeStream \
     .outputMode("complete") \
     .format("console") \
     .start(truncate=False)
 
-query.awaitTermination()
+query1.awaitTermination()
+query2.awaitTermination()

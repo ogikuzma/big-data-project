@@ -35,6 +35,7 @@ services:
       - PYSPARK_PYTHON=python3
     env_file:
       - ./hadoop.env
+      - ./postgres.env
     volumes:
       - ../scripts:/home/batch
 
@@ -111,13 +112,28 @@ services:
     depends_on:
       - zoo1
 
-  dataset-loader:
-    build: ../injector
-    container_name: dataset_loader
+  postgresql:
+    image: postgres:14.1-alpine
+    restart: on-failure:5
+    container_name: postgresql
+    ports:
+      - "8091:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=1111
+      - POSTGRES_DB=big_data
     volumes:
-      - ../datasets:/datasets
+      - pgdata2:/var/lib/postgresql/data
+
+  metabase-app:
+    image: metabase/metabase
+    restart: on-failure:10
+    ports:
+      - 3000:3000
+    volumes:
+      - /home/app/metabase-data:/metabase-data
     depends_on:
-      - namenode
+      - postgresql
 
 volumes:
   hadoop_namenode:
@@ -126,3 +142,4 @@ volumes:
   zoo1log:
   kafka1:
   kafka2:
+  pgdata2:

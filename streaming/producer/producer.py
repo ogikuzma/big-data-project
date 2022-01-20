@@ -65,8 +65,15 @@ with client.read(file_location, encoding='utf-8', delimiter='\r') as reader:
             schema = line
             continue
         id = line.split(",")[0]
-        row = convert_line_to_json(schema, line)
-        print('sending data to topic...')
-        print(row)
-        producer.send(TOPIC, key=bytes(id, 'utf-8'), value=bytes(row, 'utf-8'))
-        time.sleep(1)
+
+        try:
+            row = convert_line_to_json(schema, line)
+            print('sending data to topic...')
+            print(row)
+            producer.send(TOPIC, key=bytes(id, 'utf-8'), value=bytes(row, 'utf-8'))
+            time.sleep(1)
+        except Exception as e:
+            print('Exception...')
+            pass
+
+        

@@ -29,7 +29,7 @@ df = spark \
   .readStream \
   .format("kafka") \
   .option("kafka.bootstrap.servers", "kafka1:19092,kafka2:19092") \
-  .option("subscribe", TOPIC) \
+  .option("subscribe", "cars") \
   .load()
 
 df = clean_dataframe(df)
@@ -44,10 +44,30 @@ num_of_ads = df.groupBy(window(df.timestamp, "1 minute", "30 seconds"), "state")
                 .orderBy("window")
 
 
-query = num_of_ads \
+HDFS_NAMENODE = os.environ["CORE_CONF_fs_defaultFS"]
+
+# num_of_ads \
+#     .writeStream \
+#     .format("csv") \
+#     .option("header", "false") \
+#     .option("path", f"{HDFS_NAMENODE}/user/root/data-lake/transformation/ads_per_state_result.csv") \
+#     .option("checkpointLocation", f"{HDFS_NAMENODE}/user/root/data-lake/transformation/ads_per_state_result.csv") \
+#     .start()
+
+query1 = num_of_ads.select( to_json(struct("*")).alias("value")) \
+  .writeStream \
+  .outputMode("complete") \
+  .format("kafka") \
+  .option("kafka.bootstrap.servers", "kafka1:19092,kafka2:19092") \
+  .option("checkpointLocation", f"{HDFS_NAMENODE}/user/root/data-lake/transformation/ads_per_state_result") \
+  .option("topic", "ads_per_state") \
+  .start()
+
+query2 = num_of_ads \
     .writeStream \
     .outputMode("complete") \
     .format("console") \
     .start(truncate=False)
 
-query.awaitTermination()
+query1.awaitTermination()
+query2.awaitTermination()

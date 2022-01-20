@@ -67,11 +67,23 @@ df = spark \
 df = clean_dataframe(df)
 
 print("--- 1. Check if VIN is valid ---")
-df = df.withColumn("is_vin_valid", convertUDF(col("VIN")))
+df = df.select(col("VIN")).withColumn("is_vin_valid", convertUDF(col("VIN")))
 
-query = df \
+HDFS_NAMENODE = os.environ["CORE_CONF_fs_defaultFS"]
+
+query1 = df.select( to_json(struct("*")).alias("value")) \
+  .writeStream \
+  .outputMode("append") \
+  .format("kafka") \
+  .option("kafka.bootstrap.servers", "kafka1:19092,kafka2:19092") \
+  .option("checkpointLocation", f"{HDFS_NAMENODE}/user/root/data-lake/transformation/vin_check_result") \
+  .option("topic", "vin_check") \
+  .start()
+
+query2 = df \
     .writeStream \
     .format("console") \
     .start(truncate=True)
 
-query.awaitTermination()
+query1.awaitTermination()
+query2.awaitTermination()
