@@ -1,7 +1,8 @@
+docker cp upload_data.sh namenode:/upload_data.sh
+
 cd ../datasets
 
 docker cp postgresql-42.3.0.jar spark-master:/postgresql-42.3.0.jar
-docker cp upload_data.sh namenode:/upload_data.sh
 
 echo "Copying data to namenode container..."
 docker cp CIS_Automotive_Kaggle_Sample.csv namenode:/batch-dataset.csv

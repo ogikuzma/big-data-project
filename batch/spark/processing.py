@@ -25,16 +25,16 @@ df = spark.read \
   .csv(HDFS_NAMENODE + "/user/root/data-lake/transformation/batch-preprocessed.csv")
 
 
-print("--- 1. Average time to sell a car each year---")
-df.dropDuplicates(["vin", "firstSeen"]) \
-    .withColumn("PostingYear", year(col("firstSeen"))) \
-    .withColumn("DateDiff", datediff(col("lastSeen"), col("firstSeen"))) \
-    .groupBy("PostingYear") \
-    .agg(
-        round(avg("DateDiff")).alias("AvgSellTime(days)")
-    ) \
-    .filter(( col("PostingYear") >= 2018 )  & ( col("PostingYear") <= 2020 )) \
-    .show()
+# print("--- 1. Average time to sell a car each year---")
+# df.dropDuplicates(["vin", "firstSeen"]) \
+#     .withColumn("PostingYear", year(col("firstSeen"))) \
+#     .withColumn("DateDiff", datediff(col("lastSeen"), col("firstSeen"))) \
+#     .groupBy("PostingYear") \
+#     .agg(
+#         round(avg("DateDiff")).alias("AvgSellTime(days)")
+#     ) \
+#     .filter(( col("PostingYear") >= 2018 )  & ( col("PostingYear") <= 2020 )) \
+#     .show()
 
 
 # print("--- 2. Average price difference between asking price and msrp ---")
@@ -61,35 +61,35 @@ df.dropDuplicates(["vin", "firstSeen"]) \
 
 
 # docker cp postgresql-42.3.0.jar spark-master:./postgresql-42.3.0.jar
-# /spark/bin/spark-submit --driver-class-path postgresql-42.3.0.jar /home/batch/processing.py
+# /spark/bin/spark-submit --driver-class-path postgresql-42.3.0.jar processing.py
 
-# print("--- 4. Price decline per year for specific model ---")
-# window = Window.partitionBy().orderBy("modelName", "vf_ModelYear")
+print("--- 4. Price decline per year for specific model ---")
+window = Window.partitionBy().orderBy("modelName", "vf_ModelYear")
 
-# price_decline_df = df.filter((col("askPrice") > 0) & (col("askPrice") < 500000)) \
-#     .groupBy("modelName", "brandName", "vf_ModelYear")\
-#     .agg(
-#         min("askPrice").alias("MinPrice"),
-#         max("askPrice").alias("MaxPrice"),
-#         round(mean("askPrice")).alias("AvgPrice"),
-#         count("*").alias("TotalCars")
-#     ) \
-#     .withColumn("PriceDiff", (col("AvgPrice") - lag("AvgPrice", -1).over(window))) \
-#     .orderBy(desc("vf_ModelYear"))
+price_decline_df = df.filter((col("askPrice") > 0) & (col("askPrice") < 500000)) \
+    .groupBy("modelName", "brandName", "vf_ModelYear")\
+    .agg(
+        min("askPrice").alias("MinPrice"),
+        max("askPrice").alias("MaxPrice"),
+        round(mean("askPrice")).alias("AvgPrice"),
+        count("*").alias("TotalCars")
+    ) \
+    .withColumn("PriceDiff", (col("AvgPrice") - lag("AvgPrice", -1).over(window))) \
+    .orderBy(desc("vf_ModelYear"))
 
-# df_index = price_decline_df.select("*").withColumn("id", monotonically_increasing_id())
+df_index = price_decline_df.select("*").withColumn("id", monotonically_increasing_id())
 
-# df_index.drop("id").show()
+df_index.drop("id").show()
 
-# df_index.write \
-#   .format("jdbc") \
-#   .option("url", "jdbc:postgresql://postgresql:5432/big_data") \
-#   .option("driver", "org.postgresql.Driver") \
-#   .option("dbtable", "public.price_decline") \
-#   .option("user", "postgres") \
-#   .option("password", "1111") \
-#   .mode("overwrite") \
-#   .save() 
+df_index.write \
+  .format("jdbc") \
+  .option("url", "jdbc:postgresql://postgresql:5432/big_data") \
+  .option("driver", "org.postgresql.Driver") \
+  .option("dbtable", "public.price_decline") \
+  .option("user", "postgres") \
+  .option("password", "1111") \
+  .mode("overwrite") \
+  .save() 
 
 # df_index.filter(col("id") < 5) \
 #   .filter("vf_ModelName == 'Corolla'") \

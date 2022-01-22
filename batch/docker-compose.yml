@@ -37,7 +37,7 @@ services:
       - ./hadoop.env
       - ./postgres.env
     volumes:
-      - ../scripts:/home/batch
+      - ./spark:/home
 
   spark-worker1:
     image: bde2020/spark-worker:3.0.1-hadoop3.2
@@ -130,10 +130,60 @@ services:
     restart: on-failure:10
     ports:
       - 3000:3000
+    environment:
+      - MB_DB_TYPE=postgres
+      - MB_DB_DBNAME=big_data
+      - MB_DB_PORT=5432
+      - MB_DB_USER=postgres
+      - MB_DB_PASS=1111
+      - MB_DB_HOST=postgresql
     volumes:
-      - /home/app/metabase-data:/metabase-data
+      - metabase:/metabase-data
     depends_on:
       - postgresql
+    links:
+      - postgresql
+
+  postgres:
+    image: postgres:9.6
+    container_name: postgres
+    volumes: 
+        - ./airflow/pg-init-scripts:/docker-entrypoint-initdb.d
+    environment:
+        - POSTGRES_USER=airflow
+        - POSTGRES_PASSWORD=airflow
+        - POSTGRES_DB=airflow
+    ports:
+        - "8092:5432"
+
+  airflow:
+    image: docker-airflow-spark:1.10.7_3.0.1
+    container_name: airflow
+    user: root
+    depends_on:
+      - spark-master
+      - postgres
+    environment:
+      - LOAD_EX=n
+      - EXECUTOR=Local
+      - FERNET_KEY=wKU4DB8b8jfpqIqcTSGSyR6dWtCtF16PUVAOlviItYw=
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
+    logging:
+      options:
+        max-size: 10m
+        max-file: "3"
+    volumes:
+      - ./dags:/root/airflow/dags #DAG folder
+      - ./spark:/usr/local/spark/app #Spark Scripts (Must be the same path in airflow and Spark Cluster)
+      - ./spark/resources:/usr/local/spark/resources #Resources folder (Must be the same path in airflow and Spark Cluster)
+    ports:
+      - "8282:8080"
+    command: webserver
+    healthcheck:
+      test: ["CMD-SHELL", "[ -f /usr/local/airflow/airflow-webserver.pid ]"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
 
 volumes:
   hadoop_namenode:
@@ -143,3 +193,4 @@ volumes:
   kafka1:
   kafka2:
   pgdata2:
+  metabase:
