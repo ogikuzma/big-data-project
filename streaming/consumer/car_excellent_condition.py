@@ -4,13 +4,11 @@ from pyspark.sql.functions import from_json
 from pyspark.sql.functions import *
 from pyspark.sql.types import *
 
-from preprocessing import clean_dataframe
+from preprocessing.preprocess_dataset import clean_dataframe
 
 # run script
 # docker exec -it spark-master bash
 # /spark/bin/spark-submit --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.0.1 /home/streaming/consumer.py
-
-TOPIC = "cars"
 
 def quiet_logs(sc):
   logger = sc._jvm.org.apache.log4j
@@ -29,7 +27,7 @@ df = spark \
   .readStream \
   .format("kafka") \
   .option("kafka.bootstrap.servers", "kafka1:19092,kafka2:19092") \
-  .option("subscribe", TOPIC) \
+  .option("subscribe", "usa_cars") \
   .load()
 
 df = clean_dataframe(df)

@@ -148,7 +148,7 @@ services:
     image: postgres:9.6
     container_name: postgres
     volumes: 
-        - ./airflow/pg-init-scripts:/docker-entrypoint-initdb.d
+        - ../airflow/pg-init-scripts:/docker-entrypoint-initdb.d
     environment:
         - POSTGRES_USER=airflow
         - POSTGRES_PASSWORD=airflow

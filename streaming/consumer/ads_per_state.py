@@ -4,7 +4,7 @@ from pyspark.sql.functions import from_json
 from pyspark.sql.functions import *
 from pyspark.sql.types import *
 
-from preprocessing import clean_dataframe
+from preprocessing.preprocess_dataset import clean_dataframe
 
 # run script
 # docker exec -it spark-master bash
@@ -29,7 +29,7 @@ df = spark \
   .readStream \
   .format("kafka") \
   .option("kafka.bootstrap.servers", "kafka1:19092,kafka2:19092") \
-  .option("subscribe", "cars") \
+  .option("subscribe", "usa_cars") \
   .load()
 
 df = clean_dataframe(df)

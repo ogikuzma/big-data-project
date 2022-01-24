@@ -8,7 +8,7 @@ import sys
 
 HDFS_NAMENODE = os.environ["HDFS_NAMENODE"]
 KAFKA_BROKERS = os.environ["KAFKA_BROKERS"]
-TOPIC = "cars"
+TOPIC = "eu_cars"
 
 def convert_line_to_json(schema, line):
     row = '{'
@@ -48,7 +48,7 @@ while True:
 
 client = InsecureClient(HDFS_NAMENODE)
 
-file_location = '/user/root/data-lake/raw/streaming-dataset.csv'
+file_location = '/user/root/data-lake/raw/streaming-join-dataset.csv'
 schema = None
 
 while True:
@@ -71,7 +71,7 @@ with client.read(file_location, encoding='utf-8', delimiter='\r') as reader:
             print('sending data to topic...')
             print(row)
             producer.send(TOPIC, key=bytes(id, 'utf-8'), value=bytes(row, 'utf-8'))
-            time.sleep(1)
+            time.sleep(1.5)
         except Exception as e:
             print('Exception...')
             pass

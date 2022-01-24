@@ -4,13 +4,11 @@ from pyspark.sql.functions import from_json
 from pyspark.sql.functions import *
 from pyspark.sql.types import *
 
-from preprocessing import clean_dataframe
+from preprocessing.preprocess_dataset import clean_dataframe
 
 # run script
 # docker exec -it spark-master bash
 # /spark/bin/spark-submit --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.0.1 /home/streaming/consumer.py
-
-TOPIC = "cars"
 
 def quiet_logs(sc):
   logger = sc._jvm.org.apache.log4j
@@ -25,17 +23,26 @@ spark = SparkSession \
 quiet_logs(spark)
 
 
-df = spark \
+usa_df = spark \
   .readStream \
   .format("kafka") \
   .option("kafka.bootstrap.servers", "kafka1:19092,kafka2:19092") \
-  .option("subscribe", TOPIC) \
+  .option("subscribe", "usa_cars") \
   .load()
 
-df = clean_dataframe(df)
+# eu_df = spark \
+#   .readStream \
+#   .format("kafka") \
+#   .option("kafka.bootstrap.servers", "kafka1:19092,kafka2:19092") \
+#   .option("subscribe", "eu_cars") \
+#   .load()
+# eu_df = clean_join_dataframe(eu_df)
+# joined_streams = usa_df.join(eu_df, lit(false), "full")
+
+usa_df = clean_dataframe(usa_df)
 
 print("--- 2. Average mileage for model year ---")
-avg_mileage = df.filter("year is not null") \
+avg_mileage = usa_df.filter("year is not null") \
                 .groupBy("year") \
                 .agg(
                     round(avg("odometer")).alias("AvgMileage")
@@ -51,7 +58,7 @@ query1 = avg_mileage.select( to_json(struct("*")).alias("value")) \
   .option("kafka.bootstrap.servers", "kafka1:19092,kafka2:19092") \
   .option("checkpointLocation", f"{HDFS_NAMENODE}/user/root/data-lake/transformation/avg_mileage_result") \
   .option("topic", "avg_mileage") \
-  .start()
+  .start() 
 
 query2 = avg_mileage \
     .writeStream \

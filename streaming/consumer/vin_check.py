@@ -4,13 +4,11 @@ from pyspark.sql.functions import from_json
 from pyspark.sql.functions import *
 from pyspark.sql.types import *
 
-from preprocessing import clean_dataframe
+from preprocessing.preprocess_dataset import clean_dataframe
 
 # run script
 # docker exec -it spark-master bash
-# /spark/bin/spark-submit --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.0.1 /home/streaming/check-vin.py
-
-TOPIC = "cars"
+# /spark/bin/spark-submit --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.0.1 /home/streaming/vin_check.py
 
 def quiet_logs(sc):
   logger = sc._jvm.org.apache.log4j
@@ -32,18 +30,22 @@ def check_if_vin_valid(vin):
     "x" : 7, "y" : 8, "z" : 9
   }
 
-  sum = 0
-  for i in range(len(vin)):
-    if( vin[i].isnumeric() is False):
-      sum += transliterations[vin[i].lower()] * weights[i]
-    else:
-      sum += int(vin[i]) * weights[i]
+  try:
+    sum = 0
+    for i in range(len(vin)):
+      if( vin[i].isnumeric() is False):
+        sum += transliterations[vin[i].lower()] * weights[i]
+      else:
+        sum += int(vin[i]) * weights[i]
 
-  check_digit = sum % 11
-  if(check_digit == 10):
-    check_digit = 'X'
+    check_digit = sum % 11
+    if(check_digit == 10):
+      check_digit = 'X'
 
-  return str(check_digit) == vin[8]
+    return str(check_digit) == vin[8]
+
+  except:
+    return False
 
 
 # neophodno je kreirati user_defined_function
@@ -61,7 +63,7 @@ df = spark \
   .readStream \
   .format("kafka") \
   .option("kafka.bootstrap.servers", "kafka1:19092,kafka2:19092") \
-  .option("subscribe", TOPIC) \
+  .option("subscribe", "usa_cars") \
   .load()
 
 df = clean_dataframe(df)
