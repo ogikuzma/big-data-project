@@ -27,23 +27,24 @@ df = spark.read \
 
 print("--- 1. Average time to sell a car each year---")
 df.dropDuplicates(["vin", "firstSeen"]) \
-    .withColumn("PostingYear", year(col("firstSeen"))) \
-    .withColumn("DateDiff", datediff(col("lastSeen"), col("firstSeen"))) \
-    .groupBy("PostingYear") \
-    .agg(
-        round(avg("DateDiff")).alias("AvgSellTime(days)")
-    ) \
-    .filter(( col("PostingYear") >= 2018 )  & ( col("PostingYear") <= 2020 )) \
-    .show()
+  .withColumn("PostingYear", year(col("firstSeen"))) \
+  .withColumn("DateDiff", datediff(col("lastSeen"), col("firstSeen"))) \
+  .filter(( col("PostingYear") >= 2018 )  & ( col("PostingYear") <= 2020 )) \
+  .groupBy("PostingYear") \
+  .agg(
+      round(avg("DateDiff")).alias("AvgSellTime(days)")
+  ) \
+  .show()
 
 
 print("--- 2. Average price difference between asking price and msrp ---")
-df.filter("msrp > 0 and askPrice > 0") \
-              .selectExpr("(1 - (askPrice/msrp)) * 100 as price_difference") \
-              .agg(
-                  round(avg("price_difference")).alias("AvgPriceDiff(%)")
-              ) \
-              .show()
+df.dropDuplicates(["vin", "firstSeen"]) \
+  .filter("msrp > 0 and askPrice > 0") \
+  .selectExpr("(1 - (askPrice/msrp)) * 100 as price_difference") \
+  .agg(
+      round(avg("price_difference")).alias("AvgPriceDiff(%)")
+  ) \
+  .show()
 
 
 print("--- 3. Mileage validity ---")
@@ -64,7 +65,7 @@ mileage_df.filter("vin == '06d4b59fdef1d3e3ac3c8b10596f73ea4720355857fbd000f9f69
 # /spark/bin/spark-submit --driver-class-path postgresql-42.3.0.jar processing.py
 
 print("--- 4. Price decline per year for specific model ---")
-window = Window.partitionBy().orderBy("modelName", "vf_ModelYear")
+window = Window.partitionBy().orderBy("modelName", "brandName", "vf_ModelYear")
 
 price_decline_df = df.filter((col("askPrice") > 0) & (col("askPrice") < 500000)) \
     .filter(col("vf_ModelYear") < 2021) \
@@ -108,19 +109,19 @@ df_corolla.filter(col("id") >= 5) \
   .show()
 
 
-print("--- 6. Average mileage per year ---")
+print("--- 5. Average mileage per year ---")
 df.dropDuplicates(["vin"]) \
-       .filter("not (mileage == 0 and isNew == false)") \
-       .filter("vf_ModelYear < 2021") \
-       .groupBy("vf_ModelYear") \
-       .agg(
-         round(mean("mileage")).alias("AvgMileage")
-       ) \
-       .orderBy(desc("vf_ModelYear")) \
-       .show()
+  .filter("not (mileage == 0 and isNew == false)") \
+  .filter("vf_ModelYear < 2021") \
+  .groupBy("vf_ModelYear") \
+  .agg(
+    round(mean("mileage")).alias("AvgMileage")
+  ) \
+  .orderBy(desc("vf_ModelYear")) \
+  .show()
 
 
-print("--- 7. Months sorted by number of ads ---")
+print("--- 6. Months sorted by number of ads ---")
 df_numOfAds = df.withColumn("PostingYear", year(col("firstSeen"))) \
   .withColumn("PostingMonth", month(col("firstSeen"))) \
   .groupBy("PostingYear", "PostingMonth") \
@@ -146,7 +147,7 @@ df_numOfAds.write \
   .mode("overwrite") \
   .save() 
 
-print("--- 8. Most advertised car brands per year ---")
+print("--- 7. Most advertised car brands per year ---")
 df_brands = df.dropDuplicates(["vin"]) \
   .withColumn("PostingYear", year(col("firstSeen"))) \
   .groupBy("PostingYear", "brandName") \
@@ -168,7 +169,7 @@ df_brands \
   .show()
 
   
-print("--- 9. Average number of seats joined with number of children born ---")
+print("--- 8. Average number of seats joined with number of children born ---")
 df_children = spark.read \
   .option("delimiter", ",") \
   .option("header", "true") \

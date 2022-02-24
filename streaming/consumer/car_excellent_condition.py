@@ -8,7 +8,7 @@ from preprocessing.preprocess_dataset import clean_dataframe
 
 # run script
 # docker exec -it spark-master bash
-# /spark/bin/spark-submit --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.0.1 /home/streaming/consumer.py
+# /spark/bin/spark-submit --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.0.1 /home/car_excellent_condition.py
 
 def quiet_logs(sc):
   logger = sc._jvm.org.apache.log4j
