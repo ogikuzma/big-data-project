@@ -1,4 +1,13 @@
 # Big Data project
+Motivation for this project was to create a system architecture for storing large amount of car data, its efficient batch and streaming processing in order to get useful information from the data.
+
+Technologies used: Apache Hadoop, Apache Spark, Apache Kafka, Metabase, PostgreSQL, Airflow, Druid, Docker
+
+## Architecture
+
+![arhitektura](https://user-images.githubusercontent.com/57645292/155559093-9ea30209-af2d-42fa-bbf0-09e6b9b13e4a.png)
+
+## Running the application
 1. Create "datasets" directory in the root directory
 2. Download batch and streaming datasets from these 2 links:
 - https://www.kaggle.com/cisautomotiveapi/large-car-dataset
@@ -27,3 +36,13 @@ GROUP BY "modelName", "vf_ModelYear", "brandName", "AvgPrice", "PriceDiff", "Tot
 ORDER BY "vf_ModelYear" desc;
 ```
 - Set "vf_ModelYear" as x-axis and "AvgPrice" for y-axis
+
+## Streaming
+1. Go to "streaming" directory and run:
+```
+./docker-run.sh
+```
+2. After producer starts filling up Kafka broker with the data, in another terminal run:
+```
+./spark-jobs-run.sh
+```
